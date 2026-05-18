@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+LABEL maintainer="server-monitor"
+LABEL description="Host metrics collector → InfluxDB"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
+        libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY collector.py .
+
+CMD ["python", "-u", "collector.py"]

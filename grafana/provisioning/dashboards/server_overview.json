@@ -1,0 +1,561 @@
+{
+  "title": "Server Monitor",
+  "uid": "server-monitor-v1",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-3h", "to": "now" },
+  "timepicker": {},
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "tags": ["server", "infrastructure"],
+  "panels": [
+
+    { "type": "row", "title": "🖥️  System Overview", "id": 100, "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 } },
+
+    {
+      "type": "gauge", "title": "CPU Usage", "id": 1,
+      "gridPos": { "h": 8, "w": 4, "x": 0, "y": 1 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto", "showThresholdLabels": false, "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green",  "value": null },
+            { "color": "yellow", "value": 60 },
+            { "color": "orange", "value": 80 },
+            { "color": "red",    "value": 90 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "gauge", "title": "Memory Usage", "id": 2,
+      "gridPos": { "h": 8, "w": 4, "x": 4, "y": 1 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto", "showThresholdLabels": false, "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green",  "value": null },
+            { "color": "yellow", "value": 60 },
+            { "color": "orange", "value": 80 },
+            { "color": "red",    "value": 90 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"memory\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "stat", "title": "Uptime", "id": 3,
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"system\" and r._field == \"uptime_seconds\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "stat", "title": "Load Average (1m)", "id": 4,
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 5 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green",  "value": null },
+            { "color": "yellow", "value": 2 },
+            { "color": "red",    "value": 4 }
+          ]},
+          "color": { "mode": "thresholds" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_1m\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "stat", "title": "Open File Descriptors", "id": 5,
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] },
+          "color": { "mode": "fixed", "fixedColor": "purple" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"system\" and r._field == \"open_file_descriptors\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "stat", "title": "Swap Usage", "id": 6,
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 5 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green",  "value": null },
+            { "color": "yellow", "value": 30 },
+            { "color": "red",    "value": 70 }
+          ]},
+          "color": { "mode": "thresholds" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"swap\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "stat", "title": "Load Avg 1m / 5m / 15m", "id": 7,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "value_and_name", "orientation": "horizontal" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green",  "value": null },
+            { "color": "yellow", "value": 2 },
+            { "color": "red",    "value": 4 }
+          ]},
+          "color": { "mode": "thresholds" }
+        }, "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+          "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_1m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 1m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+          "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_5m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 5m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+          "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_15m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 15m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
+          "refId": "C"
+        }
+      ]
+    },
+
+    { "type": "row", "title": "📈  CPU & Memory Over Time", "id": 101, "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 } },
+
+    {
+      "type": "timeseries", "title": "CPU Usage Over Time", "id": 10,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "gradientMode": "opacity", "spanNulls": false },
+          "color": { "mode": "palette-classic" }
+        }, "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+          "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\")\n  |> filter(fn: (r) => r._field == \"usage_pct\" or r._field == \"user_pct\" or r._field == \"system_pct\" or r._field == \"iowait_pct\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: if r._field == \"usage_pct\" then \"Total CPU\" else if r._field == \"user_pct\" then \"User\" else if r._field == \"system_pct\" then \"System\" else \"IO Wait\"}))",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "type": "timeseries", "title": "Memory Over Time", "id": 11,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity", "spanNulls": false },
+          "color": { "mode": "palette-classic" }
+        }, "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+          "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"memory\")\n  |> filter(fn: (r) => r._field == \"used_bytes\" or r._field == \"cached_bytes\" or r._field == \"available_bytes\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: if r._field == \"used_bytes\" then \"Used\" else if r._field == \"cached_bytes\" then \"Cached\" else \"Available\"}))",
+          "refId": "A"
+        }
+      ]
+    },
+
+    { "type": "row", "title": "💾  Disk", "id": 102, "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 } },
+
+    {
+      "type": "bargauge", "title": "Disk Usage per Partition", "id": 20,
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "horizontal", "displayMode": "gradient", "valueMode": "color",
+        "text": {}, "namePlacement": "left"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green",  "value": null },
+            { "color": "yellow", "value": 70 },
+            { "color": "orange", "value": 85 },
+            { "color": "red",    "value": 95 }
+          ]},
+          "color": { "mode": "thresholds" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"disk_usage\" and r._field == \"usage_pct\")\n  |> last()\n  |> group(columns: [\"mountpoint\"])\n  |> map(fn: (r) => ({r with _field: r.mountpoint}))",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "table", "title": "Disk Partitions Detail", "id": 21,
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "sortBy": [], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "usage_pct" }, "properties": [
+            { "id": "unit", "value": "percent" },
+            { "id": "displayName", "value": "Use%" },
+            { "id": "custom.displayMode", "value": "color-background" },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+              { "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }
+            ]}}
+          ]},
+          { "matcher": { "id": "byName", "options": "used_bytes" }, "properties": [{ "id": "unit", "value": "bytes" }, { "id": "displayName", "value": "Used" }] },
+          { "matcher": { "id": "byName", "options": "free_bytes" }, "properties": [{ "id": "unit", "value": "bytes" }, { "id": "displayName", "value": "Free" }] },
+          { "matcher": { "id": "byName", "options": "total_bytes" }, "properties": [{ "id": "unit", "value": "bytes" }, { "id": "displayName", "value": "Total" }] }
+        ]
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"disk_usage\")\n  |> filter(fn: (r) => r._field == \"usage_pct\" or r._field == \"used_bytes\" or r._field == \"free_bytes\" or r._field == \"total_bytes\")\n  |> last()\n  |> pivot(rowKey: [\"mountpoint\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"mountpoint\", \"usage_pct\", \"used_bytes\", \"free_bytes\", \"total_bytes\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "timeseries", "title": "Disk I/O", "id": 22,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "color": { "mode": "palette-classic" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"disk_io\")\n  |> filter(fn: (r) => r._field == \"read_bytes\" or r._field == \"write_bytes\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.device + \" \" + r._field}))",
+        "refId": "A"
+      }]
+    },
+
+    { "type": "row", "title": "🌐  Network", "id": 103, "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 } },
+
+    {
+      "type": "timeseries", "title": "Network Traffic (bytes/s)", "id": 30,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "color": { "mode": "palette-classic" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"network\")\n  |> filter(fn: (r) => r._field == \"bytes_sent\" or r._field == \"bytes_recv\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.interface + \" \" + (if r._field == \"bytes_sent\" then \"TX\" else \"RX\")}))",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "timeseries", "title": "Network Errors & Drops", "id": 31,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "color": { "mode": "palette-classic" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"network\")\n  |> filter(fn: (r) => r._field == \"errin\" or r._field == \"errout\" or r._field == \"dropin\" or r._field == \"dropout\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: sum, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.interface + \" \" + r._field}))",
+        "refId": "A"
+      }]
+    },
+
+    { "type": "row", "title": "🔧  Services & Databases", "id": 104, "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 } },
+
+    {
+      "type": "table", "title": "Service Status", "id": 40,
+      "gridPos": { "h": 12, "w": 8, "x": 0, "y": 37 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "sortBy": [{ "displayName": "Service", "desc": false }], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "service" }, "properties": [{ "id": "displayName", "value": "Service" }, { "id": "custom.width", "value": 160 }] },
+          { "matcher": { "id": "byName", "options": "running" }, "properties": [
+            { "id": "displayName", "value": "Status" },
+            { "id": "custom.displayMode", "value": "color-background" },
+            { "id": "mappings", "value": [
+              { "type": "value", "options": { "0": { "text": "⛔ DOWN",   "color": "red"  }, "1": { "text": "✅ UP", "color": "green" } } }
+            ]},
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+              { "color": "red", "value": null }, { "color": "green", "value": 1 }
+            ]}}
+          ]},
+          { "matcher": { "id": "byName", "options": "process_count" }, "properties": [{ "id": "displayName", "value": "Processes" }] }
+        ]
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"service_status\")\n  |> filter(fn: (r) => r._field == \"running\" or r._field == \"process_count\")\n  |> last()\n  |> pivot(rowKey: [\"service\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"service\", \"running\", \"process_count\"])\n  |> sort(columns: [\"service\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "table", "title": "Database Port Reachability", "id": 41,
+      "gridPos": { "h": 12, "w": 8, "x": 8, "y": 37 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "sortBy": [], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "database" }, "properties": [{ "id": "displayName", "value": "Database" }, { "id": "custom.width", "value": 160 }] },
+          { "matcher": { "id": "byName", "options": "port" }, "properties": [{ "id": "displayName", "value": "Port" }, { "id": "custom.width", "value": 80 }] },
+          { "matcher": { "id": "byName", "options": "reachable" }, "properties": [
+            { "id": "displayName", "value": "Status" },
+            { "id": "custom.displayMode", "value": "color-background" },
+            { "id": "mappings", "value": [
+              { "type": "value", "options": { "0": { "text": "⛔ CLOSED", "color": "red" }, "1": { "text": "✅ OPEN", "color": "green" } } }
+            ]}
+          ]}
+        ]
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"database_status\")\n  |> filter(fn: (r) => r._field == \"reachable\" or r._field == \"port\")\n  |> last()\n  |> pivot(rowKey: [\"database\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"database\", \"reachable\", \"port\"])",
+        "refId": "A"
+      }]
+    },
+
+    { "type": "row", "title": "🐳  Docker Containers", "id": 105, "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 49 } },
+
+    {
+      "type": "table", "title": "Container Status & Resources", "id": 50,
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 50 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "sortBy": [{ "displayName": "Container", "desc": false }], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "container_name" }, "properties": [{ "id": "displayName", "value": "Container" }, { "id": "custom.width", "value": 180 }] },
+          { "matcher": { "id": "byName", "options": "image" },          "properties": [{ "id": "displayName", "value": "Image" }, { "id": "custom.width", "value": 200 }] },
+          { "matcher": { "id": "byName", "options": "status" },         "properties": [{ "id": "displayName", "value": "State" }, { "id": "custom.width", "value": 90 }] },
+          { "matcher": { "id": "byName", "options": "running" }, "properties": [
+            { "id": "displayName", "value": "OK" },
+            { "id": "custom.width", "value": 60 },
+            { "id": "custom.displayMode", "value": "color-background" },
+            { "id": "mappings", "value": [
+              { "type": "value", "options": { "0": { "text": "⛔", "color": "red" }, "1": { "text": "✅", "color": "green" } } }
+            ]}
+          ]},
+          { "matcher": { "id": "byName", "options": "cpu_pct" }, "properties": [
+            { "id": "displayName", "value": "CPU%" }, { "id": "unit", "value": "percent" },
+            { "id": "custom.width", "value": 90 },
+            { "id": "custom.displayMode", "value": "color-text" },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+              { "color": "green", "value": null }, { "color": "yellow", "value": 30 }, { "color": "red", "value": 70 }
+            ]}}
+          ]},
+          { "matcher": { "id": "byName", "options": "mem_pct" }, "properties": [
+            { "id": "displayName", "value": "Mem%" }, { "id": "unit", "value": "percent" },
+            { "id": "custom.width", "value": 90 },
+            { "id": "custom.displayMode", "value": "color-text" },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+              { "color": "green", "value": null }, { "color": "yellow", "value": 50 }, { "color": "red", "value": 80 }
+            ]}}
+          ]},
+          { "matcher": { "id": "byName", "options": "mem_usage_bytes" }, "properties": [{ "id": "displayName", "value": "Mem Used" }, { "id": "unit", "value": "bytes" }] },
+          { "matcher": { "id": "byName", "options": "restart_count" }, "properties": [
+            { "id": "displayName", "value": "Restarts" }, { "id": "custom.width", "value": 80 },
+            { "id": "custom.displayMode", "value": "color-text" },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+              { "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }
+            ]}}
+          ]}
+        ]
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"docker_container\")\n  |> filter(fn: (r) => r._field == \"running\" or r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"mem_usage_bytes\" or r._field == \"restart_count\")\n  |> last()\n  |> pivot(rowKey: [\"container_name\", \"image\", \"status\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"container_name\", \"image\", \"status\", \"running\", \"cpu_pct\", \"mem_pct\", \"mem_usage_bytes\", \"restart_count\"])\n  |> sort(columns: [\"container_name\"])",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "timeseries", "title": "Container CPU% Over Time", "id": 51,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 60 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": { "lineWidth": 2, "fillOpacity": 8 },
+          "color": { "mode": "palette-classic" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"docker_container\" and r._field == \"cpu_pct\")\n  |> filter(fn: (r) => r.status == \"running\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.container_name}))",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "timeseries", "title": "Container Memory% Over Time", "id": 52,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 60 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": { "lineWidth": 2, "fillOpacity": 8 },
+          "color": { "mode": "palette-classic" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"docker_container\" and r._field == \"mem_pct\")\n  |> filter(fn: (r) => r.status == \"running\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.container_name}))",
+        "refId": "A"
+      }]
+    },
+
+    { "type": "row", "title": "🔬  Top Processes", "id": 106, "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 68 } },
+
+    {
+      "type": "table", "title": "Top Processes by CPU", "id": 60,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 69 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "sortBy": [{ "displayName": "CPU%", "desc": true }], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "displayName", "value": "Process" }, { "id": "custom.width", "value": 160 }] },
+          { "matcher": { "id": "byName", "options": "cpu_pct" }, "properties": [
+            { "id": "displayName", "value": "CPU%" }, { "id": "unit", "value": "percent" }, { "id": "custom.width", "value": 90 },
+            { "id": "custom.displayMode", "value": "color-background" },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+              { "color": "green", "value": null }, { "color": "yellow", "value": 10 }, { "color": "red", "value": 50 }
+            ]}}
+          ]},
+          { "matcher": { "id": "byName", "options": "mem_pct" }, "properties": [{ "id": "displayName", "value": "Mem%" }, { "id": "unit", "value": "percent" }] },
+          { "matcher": { "id": "byName", "options": "pid" }, "properties": [{ "id": "displayName", "value": "PID" }, { "id": "custom.width", "value": 80 }] }
+        ]
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_cpu\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> pivot(rowKey: [\"name\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"name\", \"cpu_pct\", \"mem_pct\", \"pid\"])\n  |> sort(columns: [\"cpu_pct\"], desc: true)",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "type": "table", "title": "Top Processes by Memory", "id": 61,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 69 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+      "options": { "sortBy": [{ "displayName": "Mem%", "desc": true }], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "displayName", "value": "Process" }, { "id": "custom.width", "value": 160 }] },
+          { "matcher": { "id": "byName", "options": "mem_pct" }, "properties": [
+            { "id": "displayName", "value": "Mem%" }, { "id": "unit", "value": "percent" }, { "id": "custom.width", "value": 90 },
+            { "id": "custom.displayMode", "value": "color-background" },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+              { "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 15 }
+            ]}}
+          ]},
+          { "matcher": { "id": "byName", "options": "cpu_pct" }, "properties": [{ "id": "displayName", "value": "CPU%" }, { "id": "unit", "value": "percent" }] },
+          { "matcher": { "id": "byName", "options": "pid" }, "properties": [{ "id": "displayName", "value": "PID" }, { "id": "custom.width", "value": 80 }] }
+        ]
+      },
+      "targets": [{
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_mem\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> pivot(rowKey: [\"name\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"name\", \"cpu_pct\", \"mem_pct\", \"pid\"])\n  |> sort(columns: [\"mem_pct\"], desc: true)",
+        "refId": "A"
+      }]
+    }
+
+  ]
+}

@@ -1,0 +1,82 @@
+version: '3.8'
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Server Monitor Stack
+#   - InfluxDB 2.x  : time-series storage (7-day retention, auto-provisioned)
+#   - Collector     : Python agent reading host metrics every 60s
+#   - Grafana       : pre-configured dashboard, no manual setup needed
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Time-series database ───────────────────────────────────────────────────
+  influxdb:
+    image: influxdb:2.7
+    container_name: monitor_influxdb
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8086:8086"      # bind only on loopback — not exposed to internet
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE:       setup
+      DOCKER_INFLUXDB_INIT_USERNAME:   ${INFLUXDB_USERNAME}
+      DOCKER_INFLUXDB_INIT_PASSWORD:   ${INFLUXDB_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG:        ${INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET:     ${INFLUXDB_BUCKET}
+      DOCKER_INFLUXDB_INIT_RETENTION:  168h        # 7 days
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ── Metric collector ───────────────────────────────────────────────────────
+  collector:
+    build:
+      context: ./collector
+      dockerfile: Dockerfile
+    container_name: monitor_collector
+    restart: unless-stopped
+    # pid:host  → shares host PID namespace so psutil sees all host processes
+    # network_mode:host → can reach 127.0.0.1:8086 (InfluxDB bound to loopback)
+    #                     and check service ports on the host
+    pid: host
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro   # Docker stats
+    environment:
+      INFLUXDB_URL:      "http://127.0.0.1:8086"
+      INFLUXDB_TOKEN:    ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG:      ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET:   ${INFLUXDB_BUCKET}
+      COLLECT_INTERVAL:  "60"
+    depends_on:
+      influxdb:
+        condition: service_healthy
+
+  # ── Dashboard ──────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: monitor_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      GF_SECURITY_ADMIN_USER:     ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP:     "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/server_overview.json
+      INFLUXDB_TOKEN:             ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG:               ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET:            ${INFLUXDB_BUCKET}
+    depends_on:
+      - influxdb
+
+volumes:
+  influxdb_data:
+  grafana_data:
