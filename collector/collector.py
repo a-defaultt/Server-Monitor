@@ -481,7 +481,7 @@ def main() -> None:
                 bucket=INFLUXDB_BUCKET,
                 org=INFLUXDB_ORG,
                 record=all_points,
-                write_precision=WritePrecision.SECONDS,
+                write_precision=WritePrecision.S,
             )
 
             elapsed = time.monotonic() - cycle_start
