@@ -21,6 +21,7 @@ import time
 import socket
 import logging
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 import psutil
 import docker
@@ -426,14 +427,18 @@ def collect_databases() -> list[Point]:
 
 def wait_for_influxdb(retries: int = 40, delay: int = 5) -> None:
     """Block until InfluxDB port accepts connections."""
-    log.info("Waiting for InfluxDB at %s …", INFLUXDB_URL)
+    parsed = urlparse(INFLUXDB_URL)
+    host = parsed.hostname or "127.0.0.1"
+    port = parsed.port or 8086
+
+    log.info("Waiting for InfluxDB at %s:%d …", host, port)
     for attempt in range(1, retries + 1):
-        if port_open("127.0.0.1", 8086):
+        if port_open(host, port):
             log.info("InfluxDB is up.")
             return
         log.info("  attempt %d/%d — retrying in %ds", attempt, retries, delay)
         time.sleep(delay)
-    raise RuntimeError("InfluxDB did not become ready in time.")
+    raise RuntimeError(f"InfluxDB at {host}:{port} did not become ready in time.")
 
 
 def main() -> None:
