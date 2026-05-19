@@ -296,12 +296,13 @@ def collect_services(proc_names: dict[str, int]) -> list[Point]:
 def collect_top_processes() -> list[Point]:
     """Top 15 processes by CPU% and top 15 by memory%."""
     snapshot: list[dict] = []
-    for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent", "status"]):
+    for proc in psutil.process_iter(["pid", "name", "username", "cpu_percent", "memory_percent", "status"]):
         try:
             info = proc.info
             snapshot.append({
                 "pid":    info["pid"],
                 "name":   info["name"] or "?",
+                "user":   info["username"] or "?",
                 "cpu":    info["cpu_percent"] or 0.0,
                 "mem":    info["memory_percent"] or 0.0,
                 "status": info["status"] or "?",
@@ -315,8 +316,9 @@ def collect_top_processes() -> list[Point]:
             Point("top_proc_cpu")
             .tag("host", HOSTNAME)
             .tag("name", proc["name"])
+            .tag("user", proc["user"])
+            .tag("pid",  str(proc["pid"]))
             .field("rank",       int(rank))
-            .field("pid",        int(proc["pid"]))
             .field("cpu_pct",    float(proc["cpu"]))
             .field("mem_pct",    float(proc["mem"]))
         )
@@ -326,8 +328,9 @@ def collect_top_processes() -> list[Point]:
             Point("top_proc_mem")
             .tag("host", HOSTNAME)
             .tag("name", proc["name"])
+            .tag("user", proc["user"])
+            .tag("pid",  str(proc["pid"]))
             .field("rank",    int(rank))
-            .field("pid",     int(proc["pid"]))
             .field("cpu_pct", float(proc["cpu"]))
             .field("mem_pct", float(proc["mem"]))
         )
