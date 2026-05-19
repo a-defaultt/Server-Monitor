@@ -25,8 +25,10 @@ from urllib.parse import urlparse
 
 import psutil
 import docker
+import json
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+from ssh_collector import RemoteCollector
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -36,6 +38,7 @@ INFLUXDB_ORG    = os.getenv("INFLUXDB_ORG",    "monitoring")
 INFLUXDB_BUCKET = os.getenv("INFLUXDB_BUCKET", "server_metrics")
 COLLECT_INTERVAL = int(os.getenv("COLLECT_INTERVAL", "60"))
 HOSTNAME = socket.gethostname()
+REMOTE_CONFIG_PATH = os.getenv("REMOTE_CONFIG_PATH", "/etc/monitor/remote_servers.json")
 
 # ─── Service definitions ───────────────────────────────────────────────────────
 # Maps a friendly name → list of process names that indicate the service is running.
@@ -476,6 +479,18 @@ def main() -> None:
     client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
     write_api = client.write_api(write_options=SYNCHRONOUS)
 
+    # Load remote servers
+    remote_collectors = []
+    if os.path.exists(REMOTE_CONFIG_PATH):
+        try:
+            with open(REMOTE_CONFIG_PATH) as f:
+                config = json.load(f)
+                for item in config:
+                    remote_collectors.append(RemoteCollector(**item))
+            log.info("Loaded %d remote servers from %s", len(remote_collectors), REMOTE_CONFIG_PATH)
+        except Exception as e:
+            log.error("Failed to load remote config: %s", e)
+
     # Prime psutil CPU counters (first call always returns 0.0)
     psutil.cpu_percent(interval=None)
     psutil.cpu_percent(interval=None, percpu=True)
@@ -487,6 +502,7 @@ def main() -> None:
             proc_names = running_process_names()
             all_points: list[Point] = []
 
+            # Local metrics
             all_points += collect_cpu()
             all_points += collect_memory()
             all_points += collect_disk()
@@ -496,6 +512,10 @@ def main() -> None:
             all_points += collect_top_processes()
             all_points += collect_docker()
             all_points += collect_databases()
+
+            # Remote metrics
+            for rc in remote_collectors:
+                all_points += rc.collect_metrics()
 
             write_api.write(
                 bucket=INFLUXDB_BUCKET,

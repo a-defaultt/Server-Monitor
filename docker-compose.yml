@@ -46,12 +46,15 @@ services:
     network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro   # Docker stats
+      - ./remote_servers.json:/etc/monitor/remote_servers.json:ro
+      - ~/.ssh:/root/.ssh:ro
     environment:
       INFLUXDB_URL:      "http://127.0.0.1:8086"
       INFLUXDB_TOKEN:    ${INFLUXDB_TOKEN}
       INFLUXDB_ORG:      ${INFLUXDB_ORG}
       INFLUXDB_BUCKET:   ${INFLUXDB_BUCKET}
       COLLECT_INTERVAL:  "60"
+      REMOTE_CONFIG_PATH: "/etc/monitor/remote_servers.json"
     depends_on:
       influxdb:
         condition: service_healthy

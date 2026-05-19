@@ -1,0 +1,13 @@
+[
+  {
+    "hostname": "192.168.1.100",
+    "username": "root",
+    "key_path": "/root/.ssh/id_rsa",
+    "port": 22
+  },
+  {
+    "hostname": "backup-server",
+    "username": "admin",
+    "password": "secret-password"
+  }
+]
