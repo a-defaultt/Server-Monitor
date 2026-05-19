@@ -1,22 +1,6 @@
 # Project Specification: Server Monitor
 
 ## 1. Project Hierarchy
-```text
-server-monitor/
-├── collector/
-│   ├── collector.py          # Python agent for metric collection
-│   ├── Dockerfile            # Docker configuration for collector
-│   └── requirements.txt      # Python dependencies
-├── grafana/
-│   └── provisioning/
-│       ├── dashboards/       # Grafana dashboard definitions
-│       └── datasources/      # InfluxDB data source configuration
-├── docker-compose.yml        # Main orchestration file
-├── README.md                 # Project documentation
-└── setup.sh                  # Deployment script
-```
-
-
 
 ```text
 server-monitor/
@@ -36,10 +20,6 @@ server-monitor/
             └── server_overview.json  ← full pre-built dashboard
 
 ```
-
-
-
-
 
 ## 2. Stack
 - **Database:** InfluxDB v2.7 (time-series)

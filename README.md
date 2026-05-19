@@ -112,5 +112,6 @@ or the `influx` CLI inside the container:
 
 ```bash
 docker exec -it monitor_influxdb influx bucket update \
-  --name server_metrics --retention 336h   # e.g. 14 days
+  --name server_metrics --retention 336h   # e.g. 14 days ||  730h is a month || 8760h is a year
+  
 ```
