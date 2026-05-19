@@ -295,15 +295,28 @@ def collect_services(proc_names: dict[str, int]) -> list[Point]:
 
 def collect_top_processes() -> list[Point]:
     """Top 15 processes by CPU% and top 15 by memory%."""
+    # First pass: Initialize CPU counters for all processes
+    procs = []
+    for proc in psutil.process_iter(["pid", "name", "username", "memory_percent", "status"]):
+        try:
+            proc.cpu_percent(None)
+            procs.append(proc)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+
+    # Wait a short interval for CPU usage to be measurable
+    time.sleep(0.1)
+
     snapshot: list[dict] = []
-    for proc in psutil.process_iter(["pid", "name", "username", "cpu_percent", "memory_percent", "status"]):
+    # Second pass: Get actual CPU usage and other info
+    for proc in procs:
         try:
             info = proc.info
             snapshot.append({
                 "pid":    info["pid"],
                 "name":   info["name"] or "?",
                 "user":   info["username"] or "?",
-                "cpu":    info["cpu_percent"] or 0.0,
+                "cpu":    proc.cpu_percent(None),
                 "mem":    info["memory_percent"] or 0.0,
                 "status": info["status"] or "?",
             })
@@ -311,6 +324,7 @@ def collect_top_processes() -> list[Point]:
             pass
 
     points: list[Point] = []
+    # Sort by CPU
     for rank, proc in enumerate(sorted(snapshot, key=lambda x: x["cpu"], reverse=True)[:15], 1):
         points.append(
             Point("top_proc_cpu")
@@ -318,11 +332,13 @@ def collect_top_processes() -> list[Point]:
             .tag("name", proc["name"])
             .tag("user", proc["user"])
             .tag("pid",  str(proc["pid"]))
+            .field("pid",        int(proc["pid"])) # Also as field for pivot
             .field("rank",       int(rank))
             .field("cpu_pct",    float(proc["cpu"]))
             .field("mem_pct",    float(proc["mem"]))
         )
 
+    # Sort by Memory
     for rank, proc in enumerate(sorted(snapshot, key=lambda x: x["mem"], reverse=True)[:15], 1):
         points.append(
             Point("top_proc_mem")
@@ -330,6 +346,7 @@ def collect_top_processes() -> list[Point]:
             .tag("name", proc["name"])
             .tag("user", proc["user"])
             .tag("pid",  str(proc["pid"]))
+            .field("pid",     int(proc["pid"])) # Also as field for pivot
             .field("rank",    int(rank))
             .field("cpu_pct", float(proc["cpu"]))
             .field("mem_pct", float(proc["mem"]))

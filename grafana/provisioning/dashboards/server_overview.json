@@ -2,7 +2,7 @@
   "title": "Server Monitor",
   "uid": "server-monitor-v1",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "1m",
   "time": { "from": "now-3h", "to": "now" },
   "timepicker": {},
@@ -511,7 +511,7 @@
       "fieldConfig": {
         "defaults": { "custom": { "align": "left" } },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "displayName", "value": "Process" }, { "id": "custom.width", "value": 160 }] },
+          { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "displayName", "value": "Service/Software" }, { "id": "custom.width", "value": 200 }] },
           { "matcher": { "id": "byName", "options": "cpu_pct" }, "properties": [
             { "id": "displayName", "value": "CPU%" }, { "id": "unit", "value": "percent" }, { "id": "custom.width", "value": 90 },
             { "id": "custom.displayMode", "value": "color-background" },
@@ -525,7 +525,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_cpu\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> pivot(rowKey: [\"name\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"name\", \"cpu_pct\", \"mem_pct\", \"pid\"])\n  |> sort(columns: [\"cpu_pct\"], desc: true)",
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_cpu\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> group()\n  |> pivot(rowKey: [\"_time\", \"pid\", \"name\", \"user\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"pid\", \"name\", \"cpu_pct\", \"mem_pct\"])\n  |> sort(columns: [\"cpu_pct\"], desc: true)",
         "refId": "A"
       }]
     },
@@ -538,7 +538,7 @@
       "fieldConfig": {
         "defaults": { "custom": { "align": "left" } },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "displayName", "value": "Process" }, { "id": "custom.width", "value": 160 }] },
+          { "matcher": { "id": "byName", "options": "name" }, "properties": [{ "id": "displayName", "value": "Service/Software" }, { "id": "custom.width", "value": 200 }] },
           { "matcher": { "id": "byName", "options": "mem_pct" }, "properties": [
             { "id": "displayName", "value": "Mem%" }, { "id": "unit", "value": "percent" }, { "id": "custom.width", "value": 90 },
             { "id": "custom.displayMode", "value": "color-background" },
@@ -552,7 +552,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_mem\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> pivot(rowKey: [\"name\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"name\", \"cpu_pct\", \"mem_pct\", \"pid\"])\n  |> sort(columns: [\"mem_pct\"], desc: true)",
+        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_mem\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> group()\n  |> pivot(rowKey: [\"_time\", \"pid\", \"name\", \"user\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"pid\", \"name\", \"cpu_pct\", \"mem_pct\"])\n  |> sort(columns: [\"mem_pct\"], desc: true)",
         "refId": "A"
       }]
     }
