@@ -104,7 +104,8 @@ class RemoteCollector:
         return []
 
     def _collect_disk(self):
-        output = self.exec_command("df -b")
+        # -B1 ensures output is in bytes. -P ensures POSIX output format (one line per entry)
+        output = self.exec_command("df -B1 -P")
         if not output: return []
         lines = output.splitlines()
         points = []
@@ -112,21 +113,25 @@ class RemoteCollector:
             parts = line.split()
             if len(parts) < 6: continue
             device = parts[0]
-            if not device.startswith("/dev/"): continue
-            total = int(parts[1])
-            used = int(parts[2])
-            free = int(parts[3])
-            mountpoint = parts[5]
-            points.append(
-                Point("disk_usage")
-                .tag("host", self.hostname)
-                .tag("device", device)
-                .tag("mountpoint", mountpoint)
-                .field("total_bytes", total)
-                .field("used_bytes", used)
-                .field("free_bytes", free)
-                .field("usage_pct", (used/total)*100 if total > 0 else 0)
-            )
+            # Skip virtual/temp filesystems
+            if device in ("tmpfs", "devtmpfs", "udev"): continue
+            try:
+                total = int(parts[1])
+                used = int(parts[2])
+                free = int(parts[3])
+                mountpoint = parts[5]
+                points.append(
+                    Point("disk_usage")
+                    .tag("host", self.hostname)
+                    .tag("device", device)
+                    .tag("mountpoint", mountpoint)
+                    .field("total_bytes", total)
+                    .field("used_bytes", used)
+                    .field("free_bytes", free)
+                    .field("usage_pct", (used/total)*100 if total > 0 else 0)
+                )
+            except (ValueError, IndexError):
+                continue
         return points
 
     def close(self):
