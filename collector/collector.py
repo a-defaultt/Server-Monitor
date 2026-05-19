@@ -136,6 +136,7 @@ def collect_cpu() -> list[Point]:
     points.append(
         Point("cpu")
         .tag("host", HOSTNAME)
+        .tag("monitoring_type", "local")
         .tag("core", "total")
         .field("usage_pct",    float(pct_total))
         .field("user_pct",     float(times_pct.user))
@@ -154,6 +155,7 @@ def collect_cpu() -> list[Point]:
         points.append(
             Point("cpu")
             .tag("host", HOSTNAME)
+            .tag("monitoring_type", "local")
             .tag("core", f"core{i}")
             .field("usage_pct", float(pct))
         )
@@ -167,6 +169,7 @@ def collect_memory() -> list[Point]:
     return [
         Point("memory")
         .tag("host", HOSTNAME)
+        .tag("monitoring_type", "local")
         .field("total_bytes",     int(mem.total))
         .field("used_bytes",      int(mem.used))
         .field("available_bytes", int(mem.available))
@@ -199,6 +202,7 @@ def collect_disk() -> list[Point]:
             points.append(
                 Point("disk_usage")
                 .tag("host",       HOSTNAME)
+                .tag("monitoring_type", "local")
                 .tag("device",     part.device)
                 .tag("mountpoint", part.mountpoint)
                 .tag("fstype",     part.fstype)
@@ -220,6 +224,7 @@ def collect_disk() -> list[Point]:
             points.append(
                 Point("disk_io")
                 .tag("host",   HOSTNAME)
+                .tag("monitoring_type", "local")
                 .tag("device", dev)
                 .field("read_bytes",    int(io.read_bytes))
                 .field("write_bytes",   int(io.write_bytes))
@@ -244,6 +249,7 @@ def collect_network() -> list[Point]:
         points.append(
             Point("network")
             .tag("host",      HOSTNAME)
+            .tag("monitoring_type", "local")
             .tag("interface", iface)
             .field("bytes_sent",    int(io.bytes_sent))
             .field("bytes_recv",    int(io.bytes_recv))
@@ -274,6 +280,7 @@ def collect_system() -> list[Point]:
     return [
         Point("system")
         .tag("host", HOSTNAME)
+        .tag("monitoring_type", "local")
         .field("uptime_seconds",         float(uptime_secs))
         .field("users_logged_in",        int(users_count))
         .field("open_file_descriptors",  int(open_fds))
@@ -289,6 +296,7 @@ def collect_services(proc_names: dict[str, int]) -> list[Point]:
         points.append(
             Point("service_status")
             .tag("host",    HOSTNAME)
+            .tag("monitoring_type", "local")
             .tag("service", svc_name)
             .field("running",        int(count > 0))
             .field("process_count",  int(count))
@@ -332,6 +340,7 @@ def collect_top_processes() -> list[Point]:
         points.append(
             Point("top_proc_cpu")
             .tag("host", HOSTNAME)
+            .tag("monitoring_type", "local")
             .tag("name", proc["name"])
             .tag("user", proc["user"])
             .tag("pid",  str(proc["pid"]))
@@ -346,6 +355,7 @@ def collect_top_processes() -> list[Point]:
         points.append(
             Point("top_proc_mem")
             .tag("host", HOSTNAME)
+            .tag("monitoring_type", "local")
             .tag("name", proc["name"])
             .tag("user", proc["user"])
             .tag("pid",  str(proc["pid"]))
@@ -411,6 +421,7 @@ def collect_docker() -> list[Point]:
             points.append(
                 Point("docker_container")
                 .tag("host",           HOSTNAME)
+                .tag("monitoring_type", "local")
                 .tag("container_name", container.name)
                 .tag("image",          image_tag)
                 .tag("status",         status)
@@ -439,6 +450,7 @@ def collect_databases() -> list[Point]:
         points.append(
             Point("database_status")
             .tag("host",     HOSTNAME)
+            .tag("monitoring_type", "local")
             .tag("database", db_name)
             .field("reachable", int(reachable))
             .field("port",      int(port))

@@ -2,13 +2,42 @@
   "title": "Server Monitor",
   "uid": "server-monitor-v1",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "1m",
   "time": { "from": "now-3h", "to": "now" },
   "timepicker": {},
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "tags": ["server", "infrastructure"],
+  "templating": {
+    "list": [
+      {
+        "name": "host",
+        "label": "Server",
+        "type": "query",
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "definition": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"server_metrics\", tag: \"host\")",
+        "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"server_metrics\", tag: \"host\")",
+        "refresh": 1,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1
+      },
+      {
+        "name": "monitoring_type",
+        "label": "Type",
+        "type": "query",
+        "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
+        "definition": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"server_metrics\", tag: \"monitoring_type\")",
+        "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"server_metrics\", tag: \"monitoring_type\")",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": false,
+        "allValue": ".*",
+        "sort": 1
+      }
+    ]
+  },
   "panels": [
 
     { "type": "row", "title": "🖥️  System Overview", "id": 100, "collapsed": false,
@@ -35,7 +64,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
         "refId": "A"
       }]
     },
@@ -61,7 +90,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"memory\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"memory\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
         "refId": "A"
       }]
     },
@@ -80,7 +109,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"system\" and r._field == \"uptime_seconds\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"system\" and r._field == \"uptime_seconds\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
         "refId": "A"
       }]
     },
@@ -103,7 +132,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_1m\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_1m\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
         "refId": "A"
       }]
     },
@@ -122,7 +151,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"system\" and r._field == \"open_file_descriptors\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"system\" and r._field == \"open_file_descriptors\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
         "refId": "A"
       }]
     },
@@ -145,7 +174,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"swap\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"swap\" and r._field == \"usage_pct\")\n  |> last()\n  |> keep(columns: [\"_value\"])",
         "refId": "A"
       }]
     },
@@ -169,17 +198,17 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-          "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_1m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 1m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
+          "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_1m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 1m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
           "refId": "A"
         },
         {
           "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-          "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_5m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 5m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
+          "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_5m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 5m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
           "refId": "B"
         },
         {
           "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-          "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_15m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 15m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
+          "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\" and r._field == \"load_15m\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Load 15m\"}))\n  |> keep(columns: [\"_field\", \"_value\"])",
           "refId": "C"
         }
       ]
@@ -203,7 +232,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-          "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\")\n  |> filter(fn: (r) => r._field == \"usage_pct\" or r._field == \"user_pct\" or r._field == \"system_pct\" or r._field == \"iowait_pct\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: if r._field == \"usage_pct\" then \"Total CPU\" else if r._field == \"user_pct\" then \"User\" else if r._field == \"system_pct\" then \"System\" else \"IO Wait\"}))",
+          "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu\" and r.core == \"total\")\n  |> filter(fn: (r) => r._field == \"usage_pct\" or r._field == \"user_pct\" or r._field == \"system_pct\" or r._field == \"iowait_pct\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: if r._field == \"usage_pct\" then \"Total CPU\" else if r._field == \"user_pct\" then \"User\" else if r._field == \"system_pct\" then \"System\" else \"IO Wait\"}))",
           "refId": "A"
         }
       ]
@@ -224,7 +253,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-          "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"memory\")\n  |> filter(fn: (r) => r._field == \"used_bytes\" or r._field == \"cached_bytes\" or r._field == \"available_bytes\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: if r._field == \"used_bytes\" then \"Used\" else if r._field == \"cached_bytes\" then \"Cached\" else \"Available\"}))",
+          "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"memory\")\n  |> filter(fn: (r) => r._field == \"used_bytes\" or r._field == \"cached_bytes\" or r._field == \"available_bytes\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: if r._field == \"used_bytes\" then \"Used\" else if r._field == \"cached_bytes\" then \"Cached\" else \"Available\"}))",
           "refId": "A"
         }
       ]
@@ -256,7 +285,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"disk_usage\" and r._field == \"usage_pct\")\n  |> last()\n  |> group(columns: [\"mountpoint\"])\n  |> map(fn: (r) => ({r with _field: r.mountpoint}))",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"disk_usage\" and r._field == \"usage_pct\")\n  |> last()\n  |> group(columns: [\"mountpoint\"])\n  |> map(fn: (r) => ({r with _field: r.mountpoint}))",
         "refId": "A"
       }]
     },
@@ -284,7 +313,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"disk_usage\")\n  |> filter(fn: (r) => r._field == \"usage_pct\" or r._field == \"used_bytes\" or r._field == \"free_bytes\" or r._field == \"total_bytes\")\n  |> last()\n  |> pivot(rowKey: [\"mountpoint\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"mountpoint\", \"usage_pct\", \"used_bytes\", \"free_bytes\", \"total_bytes\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"disk_usage\")\n  |> filter(fn: (r) => r._field == \"usage_pct\" or r._field == \"used_bytes\" or r._field == \"free_bytes\" or r._field == \"total_bytes\")\n  |> last()\n  |> pivot(rowKey: [\"mountpoint\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"mountpoint\", \"usage_pct\", \"used_bytes\", \"free_bytes\", \"total_bytes\"])",
         "refId": "A"
       }]
     },
@@ -303,7 +332,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"disk_io\")\n  |> filter(fn: (r) => r._field == \"read_bytes\" or r._field == \"write_bytes\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.device + \" \" + r._field}))",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"disk_io\")\n  |> filter(fn: (r) => r._field == \"read_bytes\" or r._field == \"write_bytes\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.device + \" \" + r._field}))",
         "refId": "A"
       }]
     },
@@ -325,7 +354,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"network\")\n  |> filter(fn: (r) => r._field == \"bytes_sent\" or r._field == \"bytes_recv\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.interface + \" \" + (if r._field == \"bytes_sent\" then \"TX\" else \"RX\")}))",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"network\")\n  |> filter(fn: (r) => r._field == \"bytes_sent\" or r._field == \"bytes_recv\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.interface + \" \" + (if r._field == \"bytes_sent\" then \"TX\" else \"RX\")}))",
         "refId": "A"
       }]
     },
@@ -344,7 +373,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"network\")\n  |> filter(fn: (r) => r._field == \"errin\" or r._field == \"errout\" or r._field == \"dropin\" or r._field == \"dropout\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: sum, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.interface + \" \" + r._field}))",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"network\")\n  |> filter(fn: (r) => r._field == \"errin\" or r._field == \"errout\" or r._field == \"dropin\" or r._field == \"dropout\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: sum, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.interface + \" \" + r._field}))",
         "refId": "A"
       }]
     },
@@ -376,7 +405,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"service_status\")\n  |> filter(fn: (r) => r._field == \"running\" or r._field == \"process_count\")\n  |> last()\n  |> pivot(rowKey: [\"service\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"service\", \"running\", \"process_count\"])\n  |> sort(columns: [\"service\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"service_status\")\n  |> filter(fn: (r) => r._field == \"running\" or r._field == \"process_count\")\n  |> last()\n  |> pivot(rowKey: [\"service\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"service\", \"running\", \"process_count\"])\n  |> sort(columns: [\"service\"])",
         "refId": "A"
       }]
     },
@@ -402,7 +431,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"database_status\")\n  |> filter(fn: (r) => r._field == \"reachable\" or r._field == \"port\")\n  |> last()\n  |> pivot(rowKey: [\"database\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"database\", \"reachable\", \"port\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"database_status\")\n  |> filter(fn: (r) => r._field == \"reachable\" or r._field == \"port\")\n  |> last()\n  |> pivot(rowKey: [\"database\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"database\", \"reachable\", \"port\"])",
         "refId": "A"
       }]
     },
@@ -457,7 +486,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"docker_container\")\n  |> filter(fn: (r) => r._field == \"running\" or r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"mem_usage_bytes\" or r._field == \"restart_count\")\n  |> last()\n  |> pivot(rowKey: [\"container_name\", \"image\", \"status\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"container_name\", \"image\", \"status\", \"running\", \"cpu_pct\", \"mem_pct\", \"mem_usage_bytes\", \"restart_count\"])\n  |> sort(columns: [\"container_name\"])",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"docker_container\")\n  |> filter(fn: (r) => r._field == \"running\" or r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"mem_usage_bytes\" or r._field == \"restart_count\")\n  |> last()\n  |> pivot(rowKey: [\"container_name\", \"image\", \"status\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"container_name\", \"image\", \"status\", \"running\", \"cpu_pct\", \"mem_pct\", \"mem_usage_bytes\", \"restart_count\"])\n  |> sort(columns: [\"container_name\"])",
         "refId": "A"
       }]
     },
@@ -476,7 +505,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"docker_container\" and r._field == \"cpu_pct\")\n  |> filter(fn: (r) => r.status == \"running\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.container_name}))",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"docker_container\" and r._field == \"cpu_pct\")\n  |> filter(fn: (r) => r.status == \"running\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.container_name}))",
         "refId": "A"
       }]
     },
@@ -495,7 +524,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"docker_container\" and r._field == \"mem_pct\")\n  |> filter(fn: (r) => r.status == \"running\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.container_name}))",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"docker_container\" and r._field == \"mem_pct\")\n  |> filter(fn: (r) => r.status == \"running\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: r.container_name}))",
         "refId": "A"
       }]
     },
@@ -525,7 +554,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_cpu\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> group()\n  |> pivot(rowKey: [\"_time\", \"pid\", \"name\", \"user\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"pid\", \"name\", \"cpu_pct\", \"mem_pct\"])\n  |> sort(columns: [\"cpu_pct\"], desc: true)",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_cpu\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> group()\n  |> pivot(rowKey: [\"_time\", \"pid\", \"name\", \"user\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"pid\", \"name\", \"cpu_pct\", \"mem_pct\"])\n  |> sort(columns: [\"cpu_pct\"], desc: true)",
         "refId": "A"
       }]
     },
@@ -552,7 +581,7 @@
       },
       "targets": [{
         "datasource": { "type": "influxdb", "uid": "influxdb_ds" },
-        "query": "from(bucket: \"server_metrics\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_mem\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> group()\n  |> pivot(rowKey: [\"_time\", \"pid\", \"name\", \"user\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"pid\", \"name\", \"cpu_pct\", \"mem_pct\"])\n  |> sort(columns: [\"mem_pct\"], desc: true)",
+        "query": "from(bucket: \"server_metrics\")\n  |> filter(fn: (r) => r.host == \"${host}\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"top_proc_mem\")\n  |> filter(fn: (r) => r._field == \"cpu_pct\" or r._field == \"mem_pct\" or r._field == \"pid\")\n  |> last()\n  |> group()\n  |> pivot(rowKey: [\"_time\", \"pid\", \"name\", \"user\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"pid\", \"name\", \"cpu_pct\", \"mem_pct\"])\n  |> sort(columns: [\"mem_pct\"], desc: true)",
         "refId": "A"
       }]
     }

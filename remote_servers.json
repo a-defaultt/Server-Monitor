@@ -1,1 +1,8 @@
-[]
+[
+    {
+        "hostname": "54.38.85.109",
+        "username": "debian",
+        "key_path": "/home/ahmed/.ssh/id_ed25519",
+        "port": 22
+    }
+]

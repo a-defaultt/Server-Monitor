@@ -58,6 +58,7 @@ class RemoteCollector:
         return [
             Point("cpu")
             .tag("host", self.hostname)
+            .tag("monitoring_type", "remote")
             .tag("core", "total")
             .field("load_1m", float(parts[0]))
             .field("load_5m", float(parts[1]))
@@ -76,6 +77,7 @@ class RemoteCollector:
             return [
                 Point("cpu")
                 .tag("host", self.hostname)
+                .tag("monitoring_type", "remote")
                 .tag("core", "total")
                 .field("usage_pct", usage)
             ]
@@ -96,6 +98,7 @@ class RemoteCollector:
                 return [
                     Point("memory")
                     .tag("host", self.hostname)
+                    .tag("monitoring_type", "remote")
                     .field("total_bytes", total)
                     .field("used_bytes", used)
                     .field("available_bytes", available)
@@ -123,6 +126,7 @@ class RemoteCollector:
                 points.append(
                     Point("disk_usage")
                     .tag("host", self.hostname)
+                    .tag("monitoring_type", "remote")
                     .tag("device", device)
                     .tag("mountpoint", mountpoint)
                     .field("total_bytes", total)
